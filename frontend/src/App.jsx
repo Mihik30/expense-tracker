@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-// import "./App.css";
+import "./App.css";
 
 
 const App = () => {
@@ -50,6 +50,8 @@ const App = () => {
         }
     };
     
+    
+    
     const addExpense = async (e) => {
         e.preventDefault();
         if (!title || !amount || !date || !category || !paymentMethod) {
@@ -69,9 +71,10 @@ const App = () => {
                 date, 
                 category, 
                 userId, 
-                payment_method_id: paymentMethod, // This will store correct ENUM values
-                is_recurring: isRecurring // Now it's true/false
+                payment_method_id: parseInt(paymentMethod), // Convert to integer
+                is_recurring: isRecurring ? 'Yes' : 'No' 
             };
+            
     
             await axios.post("http://localhost:5000/expenses", newExpense);
             fetchExpenses(); // Refresh list
@@ -79,13 +82,12 @@ const App = () => {
             setAmount(""); 
             setDate(""); 
             setCategory(""); 
-            setPaymentMethod(""); // Reset selection
-            setIsRecurring(false); // Reset checkbox
+            setPaymentMethod(""); // Reset state
+            setIsRecurring(false);
         } catch (error) {
             console.error("Error adding expense:", error);
         }
     };
-    
     
     
     
@@ -124,22 +126,13 @@ const App = () => {
     const fetchBudgets = async () => {
         try {
             const userId = localStorage.getItem("userId");
-            if (!userId) {
-                console.error("User ID not found in localStorage");
-                return;
-            }
-    
+            if (!userId) return;
             const response = await axios.get(`http://localhost:5000/budgets/${userId}`);
-    
-            setBudgets(response.data); // Save fetched budgets
+            setBudgets(response.data);
         } catch (error) {
             console.error("Error fetching budgets:", error);
-            if (error.response && error.response.status === 404) {
-                setBudgets([]); // No budgets found, set empty array
-            }
         }
     };
-    
     
     
 
@@ -226,13 +219,15 @@ const App = () => {
 
                         {/* Payment Method Dropdown */}
                         <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                            <option value="">Select Payment Method</option>  {/* Default empty option */}
-                            <option value="Cash">Cash</option>
-                            <option value="Credit Card">Credit Card</option>
-                            <option value="Debit Card">Debit Card</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Other">Other</option>
+                            <option value="">Select Payment Method</option>
+                            <option value="1">Credit Card</option>
+                            <option value="2">Debit Card</option>
+                            <option value="3">Cash</option>
+                            <option value="4">UPI</option>
+                            <option value="5">Net Banking</option>
                         </select>
+
+
 
 
 
@@ -313,7 +308,7 @@ const App = () => {
                         </tbody>
                     </table>
 
-                    <table>
+                    {/* <table>
                         <thead>
                             <tr>
                                 <th>Category</th>
@@ -328,7 +323,7 @@ const App = () => {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </table> */}
 
                 </>
             )}

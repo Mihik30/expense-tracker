@@ -101,9 +101,9 @@ app.post("/expenses", (req, res) => {
 app.post("/addExpense", async (req, res) => {
     try {
         const { title, amount, date, category, payment_method_id, is_recurring, userId } = req.body;
-
-        if (!title || !amount || !date || !category || !payment_method_id || !is_recurring || !userId) {
-            return res.status(400).json({ error: "All fields must be filled" });
+        
+        if (!userId) {
+            return res.status(400).json({ error: "User ID is required" });
         }
 
         const sql = `INSERT INTO expenses (title, amount, date, category, payment_method_id, is_recurring, user_id) 
@@ -118,7 +118,6 @@ app.post("/addExpense", async (req, res) => {
         res.status(500).json({ error: "Error adding expense" });
     }
 });
-
 
 
 // **Delete Expense**
@@ -180,24 +179,6 @@ app.post("/budgets", (req, res) => {
     });
 });
 
-app.get("/budgets/:user_id", async (req, res) => {
-    const userId = req.params.user_id;
-
-    try {
-        const [budgets] = await db.execute("SELECT * FROM budgets WHERE user_id = ?", [userId]);
-
-        if (budgets.length === 0) {
-            return res.status(404).json({ message: "No budget found for this user." });
-        }
-
-        res.json(budgets);
-    } catch (error) {
-        console.error("Error fetching budgets:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
-
-
 app.get("/expenses/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
@@ -205,7 +186,7 @@ app.get("/expenses/:userId", async (req, res) => {
 
         const [rows] = await db.query(sql, [userId]);
 
-        console.log("Fetched Expenses:", rows);
+        console.log("Fetched Expenses:", rows); // Debugging Step
         res.json(rows);
     } catch (error) {
         console.error("Error fetching expenses:", error);
@@ -213,5 +194,13 @@ app.get("/expenses/:userId", async (req, res) => {
     }
 });
 
-
-
+app.get("/budgets/:userId", (req, res) => {
+    const { userId } = req.params;
+    db.query("SELECT * FROM budgets WHERE user_id = ?", [userId], (err, result) => {
+        if (err) {
+            console.error("Database query error:", err);
+            return res.status(500).json({ error: "Database query failed" });
+        }
+        res.json(result);
+    });
+});
