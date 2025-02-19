@@ -1,146 +1,3 @@
-// // require("dotenv").config();
-// // const express = require("express");
-// // const mysql = require("mysql2");
-// // const cors = require("cors");
-// // const bcrypt = require("bcryptjs");
-
-// // const app = express();
-// // app.use(cors());
-// // app.use(express.json());
-
-// // // MySQL Connection
-// // const db = mysql.createConnection({
-// //     host: process.env.DB_HOST,
-// //     user: process.env.DB_USER,
-// //     password: process.env.DB_PASSWORD,
-// //     database: process.env.DB_NAME,
-// // });
-
-// // db.connect((err) => {
-// //     if (err) {
-// //         console.error("Database connection failed: " + err.message);
-// //         return;
-// //     }
-// //     console.log("Connected to MySQL Database");
-// // });
-
-// // // ** Register User**
-// // app.post("/register", async (req, res) => {
-// //     const { loginid, password } = req.body;
-// //     if (!loginid || !password) return res.status(400).json({ error: "All fields are required!" });
-
-// //     try {
-// //         const hashedPassword = await bcrypt.hash(password, 10);
-// //         db.query("INSERT INTO users (loginid, password) VALUES (?, ?)", [loginid, hashedPassword], (err) => {
-// //             if (err) return res.status(500).json({ error: "User already exists or database error" });
-// //             res.json({ message: "User registered successfully!" });
-// //         });
-// //     } catch (error) {
-// //         res.status(500).json({ error: "Error hashing password" });
-// //     }
-// // });
-
-// // // ** Login User**
-// // app.post("/login", (req, res) => {
-// //     const { loginid, password } = req.body;
-// //     db.query("SELECT * FROM users WHERE loginid = ?", [loginid], async (err, results) => {
-// //         if (err || results.length === 0) return res.status(401).json({ error: "Invalid login ID or password" });
-
-// //         const user = results[0];
-// //         const passwordMatch = await bcrypt.compare(password, user.password);
-// //         if (!passwordMatch) return res.status(401).json({ error: "Invalid login ID or password" });
-
-// //         res.json({ message: "Login successful!", userId: user.id });
-// //     });
-// // });
-
-// // // ** Get Expenses for Logged-in User**
-// // app.get("/expenses/:userId", (req, res) => {
-// //     const { userId } = req.params;
-// //     db.query("SELECT * FROM expenses WHERE user_id = ?", [userId], (err, result) => {
-// //         if (err) return res.status(500).json({ error: err.message });
-// //         res.json(result);
-// //     });
-// // });
-
-// // // ** Add Expense (For Logged-in User)**
-// // app.post("/expenses", (req, res) => {
-// //     const { title, amount, date, userId } = req.body;
-// //     db.query("INSERT INTO expenses (title, amount, date, user_id) VALUES (?, ?, ?, ?)", [title, amount, date, userId], (err, result) => {
-// //         if (err) return res.status(500).json({ error: err.message });
-// //         res.json({ id: result.insertId, title, amount, date, userId });
-// //     });
-// // });
-
-// // // ** Delete Expense**
-// // app.delete("/expenses/:id", (req, res) => {
-// //     const { id } = req.params;
-// //     db.query("DELETE FROM expenses WHERE id = ?", [id], (err) => {
-// //         if (err) return res.status(500).json({ error: err.message });
-// //         res.json({ message: "Expense deleted successfully" });
-// //     });
-// // });
-
-// // // **Start Server**
-// // app.listen(5000, () => {
-// //     console.log("Server running on port 5000");
-// // });
-
-
-// require("dotenv").config(); 
-// const express = require("express");
-// const mysql = require("mysql2");
-// const cors = require("cors");
-
-// const app = express();
-// app.use(cors());
-// app.use(express.json());
-
-// // MySQL Connection
-// const db = mysql.createConnection({
-//     host: process.env.DB_HOST,
-//     user: process.env.DB_USER,
-//     password: process.env.DB_PASSWORD,
-//     database: process.env.DB_NAME,
-// });
-
-// db.connect((err) => {
-//     if (err) {
-//         console.error("Database connection failed: " + err.message);
-//         return;
-//     }
-//     console.log("Connected to MySQL Database");
-// });
-
-// // API Routes
-// app.get("/expenses", (req, res) => {
-//     db.query("SELECT * FROM expenses", (err, result) => {
-//         if (err) return res.status(500).json({ error: err.message });
-//         res.json(result);
-//     });
-// });
-
-// app.post("/expenses", (req, res) => {
-//     const { title, amount, date } = req.body;
-//     db.query("INSERT INTO expenses (title, amount, date) VALUES (?, ?, ?)", [title, amount, date], (err, result) => {
-//         if (err) return res.status(500).json({ error: err.message });
-//         res.json({ id: result.insertId, title, amount, date });
-//     });
-// });
-
-// app.delete("/expenses/:id", (req, res) => {
-//     const { id } = req.params;
-//     db.query("DELETE FROM expenses WHERE id = ?", [id], (err) => {
-//         if (err) return res.status(500).json({ error: err.message });
-//         res.json({ message: "Expense deleted successfully" });
-//     });
-// });
-
-// // Start Server
-// app.listen(5000, () => {
-//     console.log("Server running on port 5000");
-// });
-
 require("dotenv").config();
 const express = require("express");
 const mysql = require("mysql2");
@@ -241,6 +98,27 @@ app.post("/expenses", (req, res) => {
     });
 });
 
+app.post("/addExpense", async (req, res) => {
+    try {
+        const { title, amount, date, category, payment_method_id, is_recurring, userId } = req.body;
+
+        if (!title || !amount || !date || !category || !payment_method_id || !is_recurring || !userId) {
+            return res.status(400).json({ error: "All fields must be filled" });
+        }
+
+        const sql = `INSERT INTO expenses (title, amount, date, category, payment_method_id, is_recurring, user_id) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+        await db.query(sql, [title, amount, date, category, payment_method_id, is_recurring, userId]);
+
+        console.log("Expense added successfully!");
+        res.status(201).json({ message: "Expense added successfully!" });
+    } catch (error) {
+        console.error("Error adding expense:", error);
+        res.status(500).json({ error: "Error adding expense" });
+    }
+});
+
 
 
 // **Delete Expense**
@@ -256,3 +134,84 @@ app.delete("/expenses/:id", (req, res) => {
 app.listen(5000, () => {
     console.log("Server running on port 5000");
 });
+
+app.post("/income", (req, res) => {
+    const { title, amount, date, category, userId } = req.body;
+    
+    if (!title || !amount || !date || !category || !userId) {
+        return res.status(400).json({ error: "All fields must be filled" });
+    }
+
+    const sql = "INSERT INTO income (title, amount, date, category, user_id) VALUES (?, ?, ?, ?, ?)";
+    db.query(sql, [title, amount, date, category, userId], (err, result) => {
+        if (err) {
+            console.error("Database insert error:", err);
+            return res.status(500).json({ error: "Database insert failed" });
+        }
+        res.json({ message: "Income added successfully", incomeId: result.insertId });
+    });
+});
+
+app.get("/income/:userId", (req, res) => {
+    const { userId } = req.params;
+    db.query("SELECT * FROM income WHERE user_id = ?", [userId], (err, result) => {
+        if (err) {
+            console.error("Database query error:", err);
+            return res.status(500).json({ error: "Database query failed" });
+        }
+        res.json(result);
+    });
+});
+
+app.post("/budgets", (req, res) => {
+    const { userId, category, limit_amount } = req.body;
+
+    if (!userId || !category || !limit_amount) {
+        return res.status(400).json({ error: "All fields must be filled" });
+    }
+
+    const sql = "INSERT INTO budgets (user_id, category, limit_amount) VALUES (?, ?, ?)";
+    db.query(sql, [userId, category, limit_amount], (err, result) => {
+        if (err) {
+            console.error("Database insert error:", err);
+            return res.status(500).json({ error: "Database insert failed" });
+        }
+        res.json({ message: "Budget added successfully", budgetId: result.insertId });
+    });
+});
+
+app.get("/budgets/:user_id", async (req, res) => {
+    const userId = req.params.user_id;
+
+    try {
+        const [budgets] = await db.execute("SELECT * FROM budgets WHERE user_id = ?", [userId]);
+
+        if (budgets.length === 0) {
+            return res.status(404).json({ message: "No budget found for this user." });
+        }
+
+        res.json(budgets);
+    } catch (error) {
+        console.error("Error fetching budgets:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
+app.get("/expenses/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const sql = `SELECT id, title, amount, date, category, payment_method_id, is_recurring FROM expenses WHERE user_id = ?`;
+
+        const [rows] = await db.query(sql, [userId]);
+
+        console.log("Fetched Expenses:", rows);
+        res.json(rows);
+    } catch (error) {
+        console.error("Error fetching expenses:", error);
+        res.status(500).json({ error: "Error fetching expenses" });
+    }
+});
+
+
+
