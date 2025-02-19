@@ -24,8 +24,8 @@ A simple expense tracker application built with React, Node.js, and MySQL.
 ### 1. Clone the Repository
 
 ```sh
-git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-cd YOUR_REPOSITORY
+https://github.com/Mihik30/expense-tracker.git
+cd expense-tracker
 ```
 
 ### 2. Backend Setup
