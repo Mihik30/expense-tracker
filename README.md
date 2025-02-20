@@ -68,7 +68,7 @@ npm install
 #### Start React App
 
 ```sh
-npm start
+npm run dev
 ```
 
 ---
@@ -98,6 +98,7 @@ CREATE TABLE users (
 CREATE TABLE expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
+    title varchar(20),
     amount DECIMAL(10,2) NOT NULL,
     category VARCHAR(255) NOT NULL,
     payment_method_id INT,
