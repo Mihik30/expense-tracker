@@ -68,7 +68,7 @@ CREATE TABLE budgets (
     limit_amount DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
+select * from income;
 SELECT * FROM expenses WHERE user_id = 6;
 DESC expenses;
 

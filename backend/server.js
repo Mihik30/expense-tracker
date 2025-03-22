@@ -98,26 +98,25 @@ app.post("/expenses", (req, res) => {
     });
 });
 
-app.post("/addExpense", async (req, res) => {
-    try {
-        const { title, amount, date, category, payment_method_id, is_recurring, userId } = req.body;
-        
-        if (!userId) {
-            return res.status(400).json({ error: "User ID is required" });
-        }
+app.post("/expenses", (req, res) => {
+    const { title, amount, date, category, payment_method_id, is_recurring, userId } = req.body;
 
-        const sql = `INSERT INTO expenses (title, amount, date, category, payment_method_id, is_recurring, user_id) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
-
-        await db.query(sql, [title, amount, date, category, payment_method_id, is_recurring, userId]);
-
-        console.log("Expense added successfully!");
-        res.status(201).json({ message: "Expense added successfully!" });
-    } catch (error) {
-        console.error("Error adding expense:", error);
-        res.status(500).json({ error: "Error adding expense" });
+    if (!title || !amount || !date || !category || !payment_method_id || !userId) {
+        return res.status(400).json({ error: "All fields, including payment method, are required" });
     }
+
+    const sql = `INSERT INTO expenses (title, amount, date, category, payment_method_id, is_recurring, user_id) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+    db.query(sql, [title, amount, date, category, payment_method_id, is_recurring, userId], (err, result) => {
+        if (err) {
+            console.error("Error inserting expense:", err);
+            return res.status(500).json({ error: "Database insert failed" });
+        }
+        res.json({ message: "Expense added successfully!", expenseId: result.insertId });
+    });
 });
+
 
 
 // **Delete Expense**
@@ -200,6 +199,17 @@ app.get("/budgets/:userId", (req, res) => {
         if (err) {
             console.error("Database query error:", err);
             return res.status(500).json({ error: "Database query failed" });
+        }
+        res.json(result);
+    });
+});
+
+// Fetch available payment methods
+app.get("/payment-methods", (req, res) => {
+    db.query("SELECT * FROM payment_methods", (err, result) => {
+        if (err) {
+            console.error("Error fetching payment methods:", err);
+            return res.status(500).json({ error: "Database error" });
         }
         res.json(result);
     });

@@ -18,6 +18,7 @@ const App = () => {
     const [incomeCategory, setIncomeCategory] = useState("");
     const [income, setIncome] = useState([]);
     const [budgets, setBudgets] = useState([]);
+    const [paymentMethods, setPaymentMethods] = useState([]);
 
 
     const [loginid, setLoginId] = useState("");
@@ -30,6 +31,7 @@ const App = () => {
             fetchExpenses();
             fetchIncome();
             fetchBudgets();
+            fetchPaymentMethods();
         }
     }, [userId]);
     
@@ -47,6 +49,16 @@ const App = () => {
             setExpenses(response.data);
         } catch (error) {
             console.error("Error fetching expenses:", error);
+        }
+    };
+    
+    const fetchPaymentMethods = async () => {
+        try {
+            const response = await axios.get("http://localhost:5000/payment-methods");
+            console.log("Fetched Payment Methods:", response.data); // Debugging
+            setPaymentMethods(response.data);
+        } catch (error) {
+            console.error("Error fetching payment methods:", error);
         }
     };
     
@@ -71,9 +83,10 @@ const App = () => {
                 date, 
                 category, 
                 userId, 
-                payment_method_id: parseInt(paymentMethod), // Convert to integer
+                payment_method_id: parseInt(paymentMethod), // Use selected method
                 is_recurring: isRecurring ? 'Yes' : 'No' 
             };
+            
             
     
             await axios.post("http://localhost:5000/expenses", newExpense);
@@ -170,16 +183,12 @@ const App = () => {
     };
 
     const getPaymentMethodName = (id) => {
-        const methods = {
-            "1": "Credit Card",
-            "2": "Debit Card",
-            "3": "Cash",
-            "4": "UPI",
-            "5": "Net Banking"
-        };
-        return methods[id] || "Other";
-    };
+        if (!id) return "N/A"; // Handle null values
     
+        const method = paymentMethods.find(method => Number(method.id) === Number(id)); // Ensure type match
+        console.log("Searching for ID:", id, "Found:", method); // Debugging
+        return method ? method.name : "N/A";
+    };
     
     
 
@@ -220,11 +229,9 @@ const App = () => {
                         {/* Payment Method Dropdown */}
                         <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                             <option value="">Select Payment Method</option>
-                            <option value="1">Credit Card</option>
-                            <option value="2">Debit Card</option>
-                            <option value="3">Cash</option>
-                            <option value="4">UPI</option>
-                            <option value="5">Net Banking</option>
+                            {paymentMethods.map((method) => (
+                                <option key={method.id} value={method.id}>{method.name}</option>
+                            ))}
                         </select>
 
 
@@ -232,10 +239,10 @@ const App = () => {
 
 
                         {/* Recurring Toggle */}
-                        <label>
-                            <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-                            Recurring Expense
-                        </label>
+                        {/* <label> */}
+                            {/* <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} /> */}
+                            {/* Recurring Expense */}
+                        {/* </label> */}
 
                         <button type="submit">Add Expense</button>
                     </form>
@@ -265,7 +272,7 @@ const App = () => {
                                 <th>Amount</th>
                                 <th>Category</th>
                                 <th>Payment Method</th>
-                                <th>Recurring</th>
+                                {/* <th>Recurring</th> */}
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -276,8 +283,8 @@ const App = () => {
                                     <td>{expense.title}</td>
                                     <td>₹{Math.floor(expense.amount)}</td>
                                     <td>{expense.category}</td>
-                                    <td>{expense.payment_method_id || "N/A"}</td>
-                                    <td>{expense.is_recurring ? "Yes" : "No"}</td>
+                                    <td>{getPaymentMethodName(expense.payment_method_id)}</td>
+                                    {/* <td>{expense.is_recurring ? "Yes" : "No"}</td> */}
                                     <td>
                                         <button onClick={() => deleteExpense(expense.id)}>❌</button>
                                     </td>
