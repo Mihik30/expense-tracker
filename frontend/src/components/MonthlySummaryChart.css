@@ -1,0 +1,98 @@
+/* src/components/MonthlySummaryChart.css */
+
+.summary-card {
+    background-color: #ffffff;
+    padding: 15px 20px; /* Slightly reduced padding */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
+    display: flex;
+    flex-direction: column;
+    min-width: 280px; /* Minimum width for the card */
+    flex: 1; /* Allow cards to grow equally */
+}
+
+.summary-card h4 {
+    margin: 0 0 15px 0; /* Title margin */
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.95em; /* Slightly smaller title */
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.summary-content {
+    display: flex;
+    align-items: center; /* Vertically center chart and details */
+    gap: 20px; /* Space between chart and details */
+    flex-grow: 1;
+}
+
+.summary-chart-area {
+    position: relative;
+    width: 90px;  /* Fixed size for the chart area */
+    height: 90px;
+    flex-shrink: 0; /* Prevent chart area from shrinking */
+}
+
+.summary-chart-area .no-data-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    font-size: 0.8em;
+    border-radius: 50%; /* Make placeholder circular */
+    text-align: center;
+}
+
+
+.summary-details {
+    flex-grow: 1; /* Allow details to take remaining space */
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Small gap between detail items */
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between arrow and value */
+    font-size: 0.9em; /* Smaller font for details */
+}
+
+.summary-item .arrow {
+    font-size: 0.8em;
+}
+
+.summary-item .value {
+    font-weight: 500;
+}
+
+.summary-item.income .arrow,
+.summary-item.income .value {
+    color: #28a745; /* Green */
+}
+
+.summary-item.expense .arrow,
+.summary-item.expense .value {
+    color: #dc3545; /* Red */
+}
+
+.summary-item.net .value {
+    color: #343a40; /* Dark grey for net */
+}
+
+.summary-item .value.strong {
+    font-weight: 600;
+    font-size: 1.05em; /* Slightly larger net value */
+}
+
+
+.summary-divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 5px 0; /* Space around the divider */
+}
