@@ -1,0 +1,129 @@
+/* src/components/Sidebar.css */
+.sidebar {
+    width: 240px;
+    background-color: #004a99; /* Darker blue */
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    flex-shrink: 0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 101;
+}
+
+.sidebar-header {
+    padding: 20px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    flex-grow: 1;
+}
+
+.sidebar-nav li a {
+    display: block;
+    padding: 12px 20px;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 0.95em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav li a:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.sidebar-nav li a.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-weight: 500;
+    border-left-color: #4dabf7; /* Active indicator */
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-button-sidebar {
+    width: 100%;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-align: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    height: auto; /* Override global button height */
+}
+
+.logout-button-sidebar:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+         position: static; /* Remove fixed position */
+         height: auto; /* Allow height to adjust */
+         width: 100%; /* Take full width */
+         box-shadow: none;
+         border-bottom: 1px solid #dee2e6; /* Add bottom border instead */
+         z-index: 100; /* Ensure it's above content if needed */
+         flex-direction: row; /* Arrange items horizontally */
+         align-items: center; /* Center items vertically */
+         padding: 0 15px; /* Horizontal padding */
+    }
+     .sidebar-header {
+         padding: 10px 0;
+         border-bottom: none; /* Remove bottom border */
+     }
+      .sidebar-header h3 {
+          font-size: 1.1em; /* Adjust size */
+      }
+      .sidebar-nav {
+          flex-grow: 1; /* Take available space */
+          display: flex; /* Arrange links horizontally */
+          margin: 0; /* Remove vertical margin */
+          justify-content: flex-start; /* Align links left */
+          margin-left: 20px; /* Space after header */
+      }
+       .sidebar-nav li a {
+           padding: 10px 15px; /* Adjust padding */
+           border-left: none; /* Remove left border */
+           border-bottom: 3px solid transparent; /* Use bottom border for active */
+           font-size: 0.9em;
+       }
+        .sidebar-nav li a.active {
+             border-left-color: transparent; /* Remove left border */
+             border-bottom-color: #4dabf7; /* Use bottom border */
+             background-color: transparent; /* Remove background */
+        }
+    .sidebar-footer {
+        padding: 10px 0; /* Adjust padding */
+        border-top: none; /* Remove top border */
+    }
+    .logout-button-sidebar {
+        width: auto; /* Adjust width */
+        padding: 6px 12px; /* Smaller button */
+        font-size: 0.85em;
+    }
+}

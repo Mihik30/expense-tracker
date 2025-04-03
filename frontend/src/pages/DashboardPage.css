@@ -1,0 +1,69 @@
+/* src/pages/DashboardPage.css */
+.dashboard-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.dashboard-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* Ensure chart cards and summary cards have consistent base */
+.dashboard-row > .chart-card,
+.dashboard-row > .summary-card {
+    flex: 1 1 300px; /* Base size, allow grow/shrink */
+    min-width: 280px;
+}
+
+/* Specific sizing for summary cards */
+.dashboard-row > .summary-card {
+    flex-basis: 260px;
+    min-width: 240px;
+}
+
+/* Specific sizing for category pie card wrapper */
+.dashboard-row > .category-pie-card {
+    flex-basis: 300px; /* Adjust as needed */
+    min-width: 280px;
+}
+.category-pie-card .pie-chart-container { /* Target the inner container */
+    min-height: 260px; /* Ensure enough height */
+}
+
+
+/* Specific sizing for larger charts (Balance/7-Day) */
+.dashboard-row > .chart-card:has(.chart-container.large) {
+    flex-basis: 400px;
+    min-width: 350px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .dashboard-row > .chart-card:has(.chart-container.large) {
+        flex-basis: 350px;
+        min-width: 300px;
+    }
+    .dashboard-row > .summary-card { flex-basis: 240px; min-width: 220px; }
+    .dashboard-row > .category-pie-card { flex-basis: 280px; min-width: 260px; }
+
+}
+
+@media (max-width: 992px) {
+    .dashboard-row { flex-direction: column; } /* Stack all cards vertically */
+    .dashboard-row > .chart-card,
+    .dashboard-row > .summary-card,
+    .dashboard-row > .category-pie-card {
+        flex-basis: 100%; /* Full width when stacked */
+        min-width: unset;
+    }
+     /* Optionally, keep summaries side-by-side longer */
+     /* .dashboard-row:first-of-type { flex-direction: row; }
+     .dashboard-row:first-of-type > .summary-card,
+     .dashboard-row:first-of-type > .category-pie-card {
+         flex-basis: calc(33.33% - 14px);
+         min-width: 220px;
+     } */
+}

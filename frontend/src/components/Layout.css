@@ -1,0 +1,24 @@
+/* src/components/Layout.css */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content-area {
+    flex-grow: 1;
+    background-color: #f4f7f9;
+    padding: 25px;
+    margin-left: 240px; /* Sidebar width */
+    box-sizing: border-box;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-layout {
+         flex-direction: column; /* Stack sidebar/content */
+    }
+    .main-content-area {
+        margin-left: 0; /* Remove margin when stacked */
+         padding: 15px;
+    }
+}

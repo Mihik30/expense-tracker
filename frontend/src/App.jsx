@@ -1,160 +1,218 @@
-// App.jsx
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Import Chart Components
-import CategoryPieChart from "./components/CategoryPieChart";
-import MonthlySummaryChart from "./components/MonthlySummaryChart"; // <-- Import new component
+// --- Layout & Pages ---
+import Layout from "./components/Layout";
+import DashboardPage from "./pages/DashboardPage";
+import TransactionsPage from "./pages/TransactionsPage";
 
+// --- Chart Utilities ---
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler);
+
+// --- CSS ---
 import "./App.css";
+import "./components/Sidebar.css";
+import "./components/Layout.css";
+import "./pages/DashboardPage.css";
+import "./components/MonthlySummaryChart.css"; // Ensure this is imported
+import "./components/ChartCard.css"; // Ensure this is imported
 
-// --- Chart.js specific imports ---
-import {
-    Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement,
-    LineElement, ArcElement, Title, Tooltip, Legend
-} from 'chart.js';
-
-// --- Register Chart.js components ---
-ChartJS.register(
-    CategoryScale, LinearScale, BarElement, PointElement, LineElement,
-    ArcElement, Title, Tooltip, Legend
-);
-
-// --- Helper Function for Date Calculations ---
+// --- Date Helpers ---
 const getMonthBoundaries = (date) => {
     const year = date.getFullYear();
-    const month = date.getMonth(); // 0-indexed (0 = January)
+    const month = date.getMonth();
     const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0); // Day 0 of next month = last day of current month
+    const endDate = new Date(year, month + 1, 0);
     return { startDate, endDate };
 };
 
-const App = () => {
-    // ... (keep all existing states)
+const formatDateLabel = (date) => {
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
+// --- Auth Form Component (Inline) ---
+const AuthForm = ({ onLogin }) => {
+    const [loginid, setLoginId] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleLoginSubmit = (e) => {
+        e.preventDefault();
+        if (loginid && password) {
+            onLogin(loginid, password);
+        } else {
+            alert('Please enter Login ID and Password');
+        }
+    };
+
+    const handleRegisterClick = async () => {
+        if (!loginid || !password) return alert("Please enter login ID and password!");
+        try {
+            await axios.post("http://localhost:5000/register", { loginid, password });
+            alert("User registered successfully! Now login.");
+            setLoginId('');
+            setPassword('');
+        } catch (error) {
+            alert("Registration failed. User might already exist or server error.");
+            console.error("Registration error:", error);
+        }
+    };
+
+    return (
+        <form onSubmit={handleLoginSubmit}>
+            <input
+                type="text"
+                placeholder="Login ID"
+                value={loginid}
+                onChange={(e) => setLoginId(e.target.value)}
+                required
+            />
+            <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+            />
+            <button type="submit" className="login">Login</button>
+            <button type="button" onClick={handleRegisterClick} className="register">Register</button>
+        </form>
+    );
+};
+
+
+// --- Main App Component ---
+function App() {
+    // --- State ---
+    const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
     const [expenses, setExpenses] = useState([]);
+    const [income, setIncome] = useState([]);
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [budgets, setBudgets] = useState([]);
+
+    // Form State
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
     const [date, setDate] = useState("");
     const [category, setCategory] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("");
-    const [isRecurring, setIsRecurring] = useState(false);
 
     const [incomeTitle, setIncomeTitle] = useState("");
     const [incomeAmount, setIncomeAmount] = useState("");
     const [incomeDate, setIncomeDate] = useState("");
     const [incomeCategory, setIncomeCategory] = useState("");
-    const [income, setIncome] = useState([]);
-    const [budgets, setBudgets] = useState([]);
-    const [paymentMethods, setPaymentMethods] = useState([]);
 
-
-    const [loginid, setLoginId] = useState("");
-    const [password, setPassword] = useState("");
-    const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
-
-    // --- Keep all existing functions ---
-    // useEffect, fetchExpenses, addExpense, fetchIncome, addIncome, etc.
-     useEffect(() => {
-        if (userId) {
-            fetchExpenses();
-            fetchIncome();
-            fetchBudgets();
-            fetchPaymentMethods();
+    // --- Fetching Data ---
+    const fetchData = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const [expRes, incRes, payRes, budRes] = await Promise.all([
+                axios.get(`http://localhost:5000/expenses/${userId}`),
+                axios.get(`http://localhost:5000/income/${userId}`),
+                axios.get("http://localhost:5000/payment-methods"),
+                axios.get(`http://localhost:5000/budgets/${userId}`) // Assuming budgets endpoint exists per user
+            ]);
+            setExpenses(expRes.data);
+            setIncome(incRes.data);
+            setPaymentMethods(payRes.data);
+            setBudgets(budRes.data);
+        } catch (error) {
+            console.error("Error fetching data:", error);
         }
     }, [userId]);
 
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
-    const fetchExpenses = async () => { /* ... no change ... */
-         try {
-            const userId = localStorage.getItem("userId");
-            if (!userId) { console.error("No user ID found!"); return; }
-            const response = await axios.get(`http://localhost:5000/expenses/${userId}`);
-            setExpenses(response.data);
-        } catch (error) { console.error("Error fetching expenses:", error); }
-    };
-    const fetchPaymentMethods = async () => { /* ... no change ... */
-        try {
-            const response = await axios.get("http://localhost:5000/payment-methods");
-            setPaymentMethods(response.data);
-        } catch (error) { console.error("Error fetching payment methods:", error); }
-    };
-    const addExpense = async (e) => { /* ... no change ... */
+    // --- Event Handlers (Mutations) ---
+    const addExpense = useCallback(async (e) => {
         e.preventDefault();
-        if (!title || !amount || !date || !category || !paymentMethod) { return alert("All fields are required!"); }
-        const userId = localStorage.getItem("userId");
-        if (!userId) { alert("User not logged in!"); return; }
+        if (!title || !amount || !date || !category || !paymentMethod || !userId) {
+            alert("Missing fields or not logged in!"); return;
+        }
         try {
-            const newExpense = { title, amount: parseFloat(amount), date, category, userId, payment_method_id: parseInt(paymentMethod), is_recurring: isRecurring ? 'Yes' : 'No' };
+            const newExpense = { title, amount: parseFloat(amount), date, category, userId, payment_method_id: parseInt(paymentMethod), is_recurring: false };
             await axios.post("http://localhost:5000/expenses", newExpense);
-            fetchExpenses();
-            setTitle(""); setAmount(""); setDate(""); setCategory(""); setPaymentMethod(""); setIsRecurring(false);
-        } catch (error) { console.error("Error adding expense:", error); }
-     };
-    const addIncome = async (e) => { /* ... no change ... */
-         e.preventDefault();
-        if (!incomeTitle || !incomeAmount || !incomeDate || !incomeCategory) return alert("All fields are required!");
-        const userId = localStorage.getItem("userId");
-        if (!userId) { alert("User not logged in!"); return; }
+            fetchData(); // Re-fetch
+            setTitle(""); setAmount(""); setDate(""); setCategory(""); setPaymentMethod("");
+        } catch (error) { console.error("Error adding expense:", error); alert("Failed to add expense."); }
+    }, [title, amount, date, category, paymentMethod, userId, fetchData]);
+
+    const deleteExpense = useCallback(async (id) => {
+        if (!userId) return;
+        try {
+            await axios.delete(`http://localhost:5000/expenses/${id}`);
+            fetchData(); // Re-fetch
+        } catch (error) { console.error("Error deleting expense:", error); alert("Failed to delete expense."); }
+    }, [userId, fetchData]);
+
+    const addIncome = useCallback(async (e) => {
+        e.preventDefault();
+        if (!incomeTitle || !incomeAmount || !incomeDate || !incomeCategory || !userId) {
+            alert("Missing fields or not logged in!"); return;
+        }
         try {
             const newIncome = { title: incomeTitle, amount: parseFloat(incomeAmount), date: incomeDate, category: incomeCategory, userId };
             await axios.post("http://localhost:5000/income", newIncome);
-            fetchIncome();
+            fetchData(); // Re-fetch
             setIncomeTitle(""); setIncomeAmount(""); setIncomeDate(""); setIncomeCategory("");
-        } catch (error) { console.error("Error adding income:", error); }
-    };
-    const fetchIncome = async () => { /* ... no change ... */
-         try {
-            const userId = localStorage.getItem("userId");
-            if (!userId) return;
-            const response = await axios.get(`http://localhost:5000/income/${userId}`);
-            setIncome(response.data);
-        } catch (error) { console.error("Error fetching income:", error); }
-    };
-    const fetchBudgets = async () => { /* ... no change ... */
-        try {
-            const userId = localStorage.getItem("userId");
-            if (!userId) return;
-            const response = await axios.get(`http://localhost:5000/budgets/${userId}`);
-            setBudgets(response.data);
-        } catch (error) { console.error("Error fetching budgets:", error); }
-    };
-    const deleteExpense = async (id) => { /* ... no change ... */
-         try {
-            await axios.delete(`http://localhost:5000/expenses/${id}`);
-            fetchExpenses();
-        } catch (error) { console.error("Error deleting expense:", error); }
-    };
-    const handleLogin = async (e) => { /* ... no change ... */
-        e.preventDefault();
+        } catch (error) { console.error("Error adding income:", error); alert("Failed to add income."); }
+    }, [incomeTitle, incomeAmount, incomeDate, incomeCategory, userId, fetchData]);
+
+    // --- Authentication Handlers ---
+    const handleLogin = useCallback(async (loginid, password) => {
         try {
             const response = await axios.post("http://localhost:5000/login", { loginid, password });
             localStorage.setItem("userId", response.data.userId);
             setUserId(response.data.userId);
-        } catch (error) { alert("Invalid credentials!"); console.error("Login error:", error); }
-    };
-    const handleRegister = async () => { /* ... no change ... */
-         if (!loginid || !password) return alert("Please enter login ID and password!");
-        try {
-            await axios.post("http://localhost:5000/register", { loginid, password });
-            alert("User registered successfully! Now login.");
-        } catch (error) { alert("Registration failed. User might already exist or server error."); console.error("Registration error:", error); }
-    };
-    const getPaymentMethodName = (id) => { /* ... no change ... */
-         if (!id && id !== 0) return "N/A";
+        } catch (error) {
+            console.error("Login error:", error);
+            alert("Invalid credentials!");
+        }
+    }, []);
+
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem("userId");
+        setUserId(null);
+        setExpenses([]); setIncome([]); setPaymentMethods([]); setBudgets([]);
+    }, []);
+
+    // --- Utility Functions ---
+    const getPaymentMethodName = useCallback((id) => {
+        if (!id && id !== 0) return "N/A";
         const method = paymentMethods.find(method => String(method.id) === String(id));
         return method ? method.name : "Unknown";
-    };
-    const handleLogout = () => { /* ... no change ... */
-         localStorage.removeItem("userId");
-        setUserId(null);
-        setExpenses([]); setIncome([]); setBudgets([]); setPaymentMethods([]);
-        setLoginId(""); setPassword("");
-    };
+    }, [paymentMethods]);
 
-    // --- Data Processing for Category Pie Chart ---
-    const getCategoryChartData = (expensesData) => { /* ... no change ... */
+    // --- Chart Data Processing ---
+
+    // Monthly Summaries
+    const calculateMonthlyTotals = useCallback((monthOffset = 0) => {
+        const now = new Date();
+        const targetMonthDate = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+        const { startDate, endDate } = getMonthBoundaries(targetMonthDate);
+
+        const monthlyExpenses = expenses
+            .filter(exp => { const expDate = new Date(exp.date); return expDate >= startDate && expDate <= endDate; })
+            .reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+
+        const monthlyIncome = income
+            .filter(inc => { const incDate = new Date(inc.date); return incDate >= startDate && incDate <= endDate; })
+            .reduce((sum, inc) => sum + (parseFloat(inc.amount) || 0), 0);
+
+        return { income: monthlyIncome, expenses: monthlyExpenses };
+    }, [expenses, income]);
+
+    const thisMonthTotals = useMemo(() => calculateMonthlyTotals(0), [calculateMonthlyTotals]);
+    const lastMonthTotals = useMemo(() => calculateMonthlyTotals(-1), [calculateMonthlyTotals]);
+
+    // Category Pie
+    const categoryChartData = useMemo(() => {
+        if (!expenses || expenses.length === 0) return null;
         const categoryTotals = {};
-        expensesData.forEach(expense => {
+        expenses.forEach(expense => {
             const category = expense.category || 'Uncategorized';
             const amount = parseFloat(expense.amount) || 0;
             if (!categoryTotals[category]) { categoryTotals[category] = 0; }
@@ -164,211 +222,156 @@ const App = () => {
         const data = Object.values(categoryTotals);
         const backgroundColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FFCD56', '#C9CBCF', '#3C4043', '#4CAF50', '#FF5722', '#607D8B'];
         const chartBackgroundColors = labels.map((_, index) => backgroundColors[index % backgroundColors.length]);
-        const chartBorderColors = chartBackgroundColors.map(color => `${color}B3`);
-        return { labels: labels, datasets: [{ label: 'Expenses by Category', data: data, backgroundColor: chartBackgroundColors, borderColor: chartBorderColors, borderWidth: 1, }], };
-    };
-
-    const categoryChartData = useMemo(() => {
-        if (!expenses || expenses.length === 0) return null;
-        return getCategoryChartData(expenses);
+        return { labels: labels, datasets: [{ label: 'Expenses', data: data, backgroundColor: chartBackgroundColors, borderColor: '#ffffff', borderWidth: 1, }], };
     }, [expenses]);
 
+    // Last 7 Days Bar
+    const last7DaysData = useMemo(() => {
+        if (!expenses || expenses.length === 0) return null;
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 6);
 
-    // --- Data Processing for Monthly Summary Charts ---
-    const calculateMonthlyTotals = (monthOffset = 0) => {
-        const now = new Date();
-        const targetMonthDate = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1); // 1st day of target month
-        const { startDate, endDate } = getMonthBoundaries(targetMonthDate);
+        const dailyTotals = {};
+        const labels = [];
 
-        // console.log(`Calculating for ${monthOffset === 0 ? 'This Month' : 'Last Month'}: ${startDate.toDateString()} - ${endDate.toDateString()}`); // Debugging
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(startDate);
+            day.setDate(startDate.getDate() + i);
+            const label = formatDateLabel(day);
+            labels.push(label);
+            dailyTotals[day.toISOString().split('T')[0]] = 0;
+        }
 
-        const monthlyExpenses = expenses
-            .filter(exp => {
-                const expDate = new Date(exp.date);
-                return expDate >= startDate && expDate <= endDate;
-            })
-            .reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+        expenses.forEach(expense => {
+            const expDate = new Date(expense.date);
+            const expDateOnly = new Date(Date.UTC(expDate.getUTCFullYear(), expDate.getUTCMonth(), expDate.getUTCDate()));
+            const startDateOnly = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+            const endDateOnly = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate()));
 
-        const monthlyIncome = income
-            .filter(inc => {
-                const incDate = new Date(inc.date);
-                return incDate >= startDate && incDate <= endDate;
-            })
-            .reduce((sum, inc) => sum + (parseFloat(inc.amount) || 0), 0);
+            if (expDateOnly >= startDateOnly && expDateOnly <= endDateOnly) {
+                const dateString = expDate.toISOString().split('T')[0];
+                if (dailyTotals.hasOwnProperty(dateString)) {
+                    dailyTotals[dateString] += parseFloat(expense.amount) || 0;
+                }
+            }
+        });
 
-        // console.log("Monthly Income:", monthlyIncome, "Monthly Expenses:", monthlyExpenses); // Debugging
-        return { income: monthlyIncome, expenses: monthlyExpenses };
-    };
+        const data = labels.map((label, index) => {
+            const day = new Date(startDate);
+            day.setDate(startDate.getDate() + index);
+            const dateString = day.toISOString().split('T')[0];
+            return dailyTotals[dateString] || 0;
+        });
 
-    const thisMonthTotals = useMemo(() => calculateMonthlyTotals(0), [expenses, income]);
-    const lastMonthTotals = useMemo(() => calculateMonthlyTotals(-1), [expenses, income]); // -1 for last month
+        return {
+           labels: labels,
+           datasets: [{
+               label: 'Daily Expenses',
+               data: data,
+               backgroundColor: 'rgba(220, 53, 69, 0.6)',
+               borderColor: 'rgba(220, 53, 69, 1)',
+               borderWidth: 1,
+           }]
+        };
+    }, [expenses]);
 
+    // Balance Line Chart
+    const balanceData = useMemo(() => {
+        if (expenses.length === 0 && income.length === 0) return null;
 
+        const transactions = [
+            ...expenses.map(e => ({ date: new Date(e.date), amount: -(parseFloat(e.amount) || 0) })),
+            ...income.map(i => ({ date: new Date(i.date), amount: parseFloat(i.amount) || 0 }))
+        ].sort((a, b) => a.date - b.date);
+
+        if (transactions.length === 0) return null;
+
+        const balancePoints = {};
+        let currentBalance = 0;
+        transactions.forEach(t => {
+             const dateStr = t.date.toISOString().split('T')[0];
+             currentBalance += t.amount;
+             balancePoints[dateStr] = currentBalance;
+        });
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 59); // Look back 60 days
+
+        const labels = [];
+        const data = [];
+        let lastKnownBalance = 0;
+
+         // Find balance *before* the start date
+         const firstTransactionDate = transactions[0].date;
+         if(firstTransactionDate < startDate) {
+            let balanceBeforeStartDate = 0;
+            transactions.forEach(t => { if (t.date < startDate) { balanceBeforeStartDate += t.amount; }});
+            lastKnownBalance = balanceBeforeStartDate;
+         }
+
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            labels.push(formatDateLabel(d));
+            if (balancePoints.hasOwnProperty(dateStr)) { lastKnownBalance = balancePoints[dateStr]; }
+            data.push(lastKnownBalance);
+        }
+
+        return {
+            labels: labels,
+            datasets: [{
+                label: 'Balance', data: data, fill: true,
+                borderColor: 'rgb(54, 162, 235)', backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                pointBackgroundColor: 'rgb(54, 162, 235)', pointRadius: 2, pointHoverRadius: 5,
+                tension: 0.3
+            }]
+        };
+    }, [expenses, income]);
+
+    // --- Render Logic ---
     return (
-        <div className="container">
+        <Router>
             {!userId ? (
-                 <div className="auth-container">
-                     <div className="auth-box">
-                         {/* ... Auth form ... */}
-                         <h2>Login or Register</h2>
-                        <form onSubmit={handleLogin}>
-                            <input type="text" placeholder="Login ID" value={loginid} onChange={(e) => setLoginId(e.target.value)} required />
-                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                            <button type="submit" className="login">Login</button>
-                        </form>
-                        <button onClick={handleRegister} className="register">Register</button>
-                     </div>
-                 </div>
+                <div className="auth-container">
+                    <div className="auth-box">
+                        <h2>Login or Register</h2>
+                        <AuthForm onLogin={handleLogin} />
+                    </div>
+                </div>
             ) : (
-                <>
-                    <header className="header">
-                        <h1>Expense Tracker</h1>
-                        <button onClick={handleLogout} className="logout">Logout</button>
-                    </header>
-
-                    <main className="main-content">
-
-                        {/* --- NEW: Monthly Summary Section --- */}
-                        <section className="section summary-section">
-                             <MonthlySummaryChart
-                                title="This Month"
-                                income={thisMonthTotals.income}
-                                expenses={thisMonthTotals.expenses}
+                <Layout handleLogout={handleLogout}>
+                    <Routes>
+                        <Route index element={
+                            <DashboardPage
+                                thisMonthTotals={thisMonthTotals}
+                                lastMonthTotals={lastMonthTotals}
+                                categoryChartData={categoryChartData}
+                                last7DaysData={last7DaysData}
+                                balanceData={balanceData}
+                            />
+                        } />
+                        <Route path="transactions" element={
+                            <TransactionsPage
+                                expenses={expenses} income={income} paymentMethods={paymentMethods}
+                                title={title} setTitle={setTitle} amount={amount} setAmount={setAmount}
+                                date={date} setDate={setDate} category={category} setCategory={setCategory}
+                                paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+                                addExpense={addExpense} deleteExpense={deleteExpense}
+                                incomeTitle={incomeTitle} setIncomeTitle={setIncomeTitle}
+                                incomeAmount={incomeAmount} setIncomeAmount={setIncomeAmount}
+                                incomeDate={incomeDate} setIncomeDate={setIncomeDate}
+                                incomeCategory={incomeCategory} setIncomeCategory={setIncomeCategory}
+                                addIncome={addIncome}
+                                getPaymentMethodName={getPaymentMethodName}
                              />
-                             <MonthlySummaryChart
-                                title="Last Month"
-                                income={lastMonthTotals.income}
-                                expenses={lastMonthTotals.expenses}
-                             />
-                        </section>
-
-                        {/* --- Add Expense Form Section --- */}
-                        <section className="section">
-                            <h2>Add New Expense</h2>
-                             <form onSubmit={addExpense}>
-                                {/* ... Expense form inputs ... */}
-                                 <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                                <input type="number" placeholder="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} required step="0.01" min="0"/>
-                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-                                <select value={category} onChange={(e) => setCategory(e.target.value)} required>
-                                    <option value="">Category</option>
-                                    <option value="Food">Food</option>
-                                    <option value="Housing">Housing</option>
-                                    <option value="Transportation">Transportation</option>
-                                    <option value="Entertainment">Entertainment</option>
-                                    <option value="Utilities">Utilities</option>
-                                    <option value="Health">Health</option>
-                                    <option value="Miscellaneous">Miscellaneous</option>
-                                </select>
-                                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>
-                                    <option value="">Payment Method</option>
-                                    {paymentMethods.map((method) => (<option key={method.id} value={method.id}>{method.name}</option>))}
-                                </select>
-                                <button type="submit">Add Expense</button>
-                            </form>
-                        </section>
-
-                        {/* --- Category Pie Chart Section --- */}
-                        <section className="section chart-section">
-                            {categoryChartData ? (
-                                <CategoryPieChart chartData={categoryChartData} />
-                            ) : (
-                                <p className="no-data-text">Add expenses to see category distribution.</p>
-                            )}
-                        </section>
-
-                        {/* --- Expenses List Section --- */}
-                        <section className="section">
-                            <h2>Expenses</h2>
-                            <div className="table-responsive"> {/* Wrapper for responsiveness */}
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Title</th>
-                                            <th>Category</th>
-                                            <th>Payment</th>
-                                            <th className="amount-col">Amount</th> {/* Align amount right */}
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {expenses.length > 0 ? expenses.map((expense) => (
-                                            <tr key={expense.id}>
-                                                <td>{new Date(expense.date).toLocaleDateString("en-GB")}</td>
-                                                <td>{expense.title}</td>
-                                                <td>{expense.category}</td>
-                                                <td>{getPaymentMethodName(expense.payment_method_id)}</td>
-                                                <td className="amount-col expense-amount">₹{parseFloat(expense.amount).toFixed(2)}</td>
-                                                <td>
-                                                    <button onClick={() => deleteExpense(expense.id)} title="Delete Expense" className="delete-button">❌</button>
-                                                </td>
-                                            </tr>
-                                        )) : (
-                                             <tr><td colSpan="6" className="no-data-text">No expenses recorded yet.</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-
-                        {/* --- Income List Section --- */}
-                        <section className="section">
-                             <h2>Income</h2>
-                             <div className="table-responsive"> {/* Wrapper for responsiveness */}
-                                <table>
-                                     <thead>
-                                         <tr>
-                                             <th>Date</th>
-                                             <th>Title</th>
-                                             <th>Category</th>
-                                             <th className="amount-col">Amount</th> {/* Align amount right */}
-                                         </tr>
-                                     </thead>
-                                     <tbody>
-                                         {income.length > 0 ? income.map((inc) => (
-                                             <tr key={inc.id}>
-                                                 <td>{new Date(inc.date).toLocaleDateString("en-GB")}</td>
-                                                 <td>{inc.title}</td>
-                                                 <td>{inc.category}</td>
-                                                 <td className="amount-col income-amount">₹{parseFloat(inc.amount).toFixed(2)}</td>
-                                             </tr>
-                                         )) : (
-                                              <tr><td colSpan="4" className="no-data-text">No income recorded yet.</td></tr>
-                                         )}
-                                     </tbody>
-                                 </table>
-                             </div>
-                         </section>
-
-                        {/* --- MOVED: Add Income Form Section --- */}
-                        <section className="section">
-                             <h2>Add New Income</h2>
-                              <form onSubmit={addIncome}>
-                                {/* ... Income form inputs ... */}
-                                <input type="text" placeholder="Income Title" value={incomeTitle} onChange={(e) => setIncomeTitle(e.target.value)} required />
-                                <input type="number" placeholder="Amount (₹)" value={incomeAmount} onChange={(e) => setIncomeAmount(e.target.value)} required step="0.01" min="0"/>
-                                <input type="date" value={incomeDate} onChange={(e) => setIncomeDate(e.target.value)} required />
-                                <select value={incomeCategory} onChange={(e) => setIncomeCategory(e.target.value)} required>
-                                     <option value="">Category</option>
-                                     <option value="Salary">Salary</option>
-                                     <option value="Business">Business</option>
-                                     <option value="Freelance">Freelance</option>
-                                     <option value="Investment">Investment</option>
-                                     <option value="Other">Other</option>
-                                 </select>
-                                 <button type="submit">Add Income</button>
-                             </form>
-                         </section>
-
-
-                        {/* Keep Budgets section if needed */}
-
-                    </main>
-                </>
+                        } />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                     </Routes>
+                </Layout>
             )}
-        </div>
+        </Router>
     );
-};
+}
 
 export default App;

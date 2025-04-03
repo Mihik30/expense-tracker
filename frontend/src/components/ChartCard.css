@@ -1,0 +1,50 @@
+/* src/components/ChartCard.css */
+.chart-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    /* flex behavior is controlled by parent (.dashboard-row) */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent content spillover */
+}
+
+.chart-container {
+    position: relative;
+    height: 250px; /* Default height */
+    width: 100%;
+    margin: auto;
+}
+
+.chart-container.large {
+    height: 300px; /* Height for main charts */
+}
+
+.chart-card h4 {
+    margin: 0 0 15px 0; color: #495057; font-weight: 600; text-align: center;
+}
+
+.chart-card .no-data-placeholder-chart {
+    display: flex; justify-content: center; align-items: center;
+    height: 100%; width: 100%; min-height: 150px; /* Give placeholder space */
+    color: #adb5bd; font-style: italic; font-size: 0.9em;
+    text-align: center;
+}
+
+/* Ensure canvas itself is responsive */
+.chart-card canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* Specific style for pie chart container if needed */
+.pie-chart-container {
+    position: relative;
+    height: 100%; /* Fill card height */
+    width: 100%;
+    min-height: 260px; /* Ensure enough space */
+    display: flex; /* Center canvas */
+    align-items: center;
+    justify-content: center;
+}
