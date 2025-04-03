@@ -87,44 +87,56 @@ USE expense_tracker;
 ### Create Tables
 
 ```sql
+-- Database: expense_tracker
+
 -- Users Table
+-- Stores user login information.
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    loginid VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
+    loginid VARCHAR(50) UNIQUE NOT NULL, -- Unique identifier for login
+    password VARCHAR(255) NOT NULL       -- Hashed password storage
 );
 
 -- Expenses Table
+-- Records individual expense transactions.
 CREATE TABLE expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    title varchar(20),
-    amount DECIMAL(10,2) NOT NULL,
-    category VARCHAR(255) NOT NULL,
-    payment_method_id INT,
-    is_recurring BOOLEAN,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    title VARCHAR(255) NOT NULL,                 -- Description of the expense
+    amount DECIMAL(10,2) NOT NULL,               -- Monetary value of the expense
+    date DATE NOT NULL,                          -- Date the expense occurred
+    category ENUM('Food', 'Housing', 'Transportation', 'Entertainment', 'Miscellaneous') NOT NULL, -- Expense category
+    user_id INT NOT NULL,                        -- Links expense to a user
+    payment_method_id ENUM('Cash', 'Credit Card', 'Debit Card', 'UPI', 'Other') NOT NULL, -- Method used for payment
+    is_recurring ENUM('Yes', 'No') NOT NULL,     -- Indicates if the expense repeats (final state is ENUM)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Ensures data integrity, deletes expenses if user is deleted
 );
 
 -- Income Table
+-- Records individual income transactions.
 CREATE TABLE income (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    amount DECIMAL(10,2) NOT NULL,
-    source VARCHAR(255) NOT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    title VARCHAR(255) NOT NULL,     -- Description or source of income
+    amount DECIMAL(10,2) NOT NULL,   -- Monetary value of the income
+    date DATE NOT NULL,              -- Date the income was received
+    category VARCHAR(100),           -- Optional category for income (e.g., Salary, Bonus)
+    user_id INT,                     -- Links income to a user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Ensures data integrity, deletes income if user is deleted
 );
 
 -- Budgets Table
+-- Stores budget limits per category for each user.
 CREATE TABLE budgets (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    category VARCHAR(255) NOT NULL,
-    limit_amount DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    user_id INT NOT NULL,            -- Links budget to a user
+    category VARCHAR(100) NOT NULL,  -- Category the budget applies to (should ideally match expense categories)
+    limit_amount DECIMAL(10,2) NOT NULL, -- The budget limit amount for the category
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Ensures data integrity, deletes budgets if user is deleted
 );
+
+-- Note: The script includes several ALTER TABLE statements modifying columns after initial creation.
+-- The definitions above represent the FINAL state of the tables after all commands in the provided script were run.
+-- Specifically, `expenses.payment_method_id` and `expenses.is_recurring` were ultimately defined as ENUM types.
+-- The `expenses.user_id` column was added, removed, and then re-added as NOT NULL with a Foreign Key.
 ```
 
 ---
