@@ -24,8 +24,6 @@ const TransactionsPage = ({
                         <option value="Housing">Housing</option>
                         <option value="Transportation">Transportation</option>
                         <option value="Entertainment">Entertainment</option>
-                        <option value="Utilities">Utilities</option>
-                        <option value="Health">Health</option>
                         <option value="Miscellaneous">Miscellaneous</option>
                     </select>
                     <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>

@@ -297,8 +297,7 @@ function App() {
 
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(endDate.getDate() - 59); // Look back 60 days
-
+        startDate.setDate(endDate.getDate() - 59); 
         const labels = [];
         const data = [];
         let lastKnownBalance = 0;
